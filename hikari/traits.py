@@ -40,11 +40,13 @@ __all__: typing.Sequence[str] = (
     "VoiceAware",
 )
 
+import abc
 import typing
 
 from hikari import presences
 from hikari import undefined
-from hikari.internal import fast_protocol
+
+# from hikari.internal import fast_protocol
 
 if typing.TYPE_CHECKING:
     import datetime
@@ -68,25 +70,23 @@ if typing.TYPE_CHECKING:
     from hikari.api import voice as voice_
 
 
-@typing.runtime_checkable
-class NetworkSettingsAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class NetworkSettingsAware(abc.ABC):
     """Structural supertype for any component aware of network settings."""
 
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def http_settings(self) -> config.HTTPSettings:
         """HTTP settings in use by this component."""
-        raise NotImplementedError
 
     @property
+    @abc.abstractmethod
     def proxy_settings(self) -> config.ProxySettings:
         """Proxy settings in use by this component."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class EventManagerAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class EventManagerAware(abc.ABC):
     """Structural supertype for a event manager-aware object.
 
     event manager-aware components are able to manage event listeners and waiters.
@@ -95,13 +95,12 @@ class EventManagerAware(fast_protocol.FastProtocolChecking, typing.Protocol):
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def event_manager(self) -> event_manager_.EventManager:
         """Event manager for this object."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class EntityFactoryAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class EntityFactoryAware(abc.ABC):
     """Structural supertype for an entity factory-aware object.
 
     These components will be able to construct library entities.
@@ -110,13 +109,12 @@ class EntityFactoryAware(fast_protocol.FastProtocolChecking, typing.Protocol):
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def entity_factory(self) -> entity_factory_.EntityFactory:
         """Entity factory implementation for this object."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class ExecutorAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class ExecutorAware(abc.ABC):
     """Structural supertype for an executor-aware object.
 
     These components will contain an `executor` attribute that may return
@@ -127,17 +125,16 @@ class ExecutorAware(fast_protocol.FastProtocolChecking, typing.Protocol):
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def executor(self) -> typing.Optional[futures.Executor]:
         """Executor to use for blocking operations.
 
         This may return `None` if the default `asyncio` thread pool
         should be used instead.
         """
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class EventFactoryAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class EventFactoryAware(abc.ABC):
     """Structural supertype for an event factory-aware object.
 
     These components are able to construct library events.
@@ -146,27 +143,23 @@ class EventFactoryAware(fast_protocol.FastProtocolChecking, typing.Protocol):
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def event_factory(self) -> event_factory_.EventFactory:
         """Event factory component."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class IntentsAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class IntentsAware(abc.ABC):
     """A component that is aware of the application intents."""
 
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def intents(self) -> intents_.Intents:
         """Intents registered for the application."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class RESTAware(
-    EntityFactoryAware, NetworkSettingsAware, ExecutorAware, fast_protocol.FastProtocolChecking, typing.Protocol
-):
+class RESTAware(EntityFactoryAware, NetworkSettingsAware, ExecutorAware, abc.ABC):
     """Structural supertype for a REST-aware object.
 
     These are able to perform REST API calls.
@@ -175,13 +168,12 @@ class RESTAware(
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def rest(self) -> rest_.RESTClient:
         """REST client to use for HTTP requests."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class VoiceAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class VoiceAware(abc.ABC):
     """Structural supertype for a voice-aware object.
 
     This is an object that provides a `voice` property to allow the creation
@@ -191,19 +183,17 @@ class VoiceAware(fast_protocol.FastProtocolChecking, typing.Protocol):
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def voice(self) -> voice_.VoiceComponent:
         """Voice connection manager component for this application."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
 class ShardAware(
     IntentsAware,
     NetworkSettingsAware,
     ExecutorAware,
     VoiceAware,
-    fast_protocol.FastProtocolChecking,
-    typing.Protocol,
+    abc.ABC,
 ):
     """Structural supertype for a shard-aware object.
 
@@ -214,22 +204,23 @@ class ShardAware(
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def heartbeat_latencies(self) -> typing.Mapping[int, float]:
         """Mapping of shard ID to heartbeat latency.
 
         Any shards that are not yet started will be `float('nan')`.
         """
-        raise NotImplementedError
 
     @property
+    @abc.abstractmethod
     def heartbeat_latency(self) -> float:
         """Average heartbeat latency of all started shards.
 
         If no shards are started, this will return `float('nan')`.
         """
-        raise NotImplementedError
 
     @property
+    @abc.abstractmethod
     def shards(self) -> typing.Mapping[int, gateway_shard.GatewayShard]:
         """Mapping of shards in this application instance.
 
@@ -238,17 +229,17 @@ class ShardAware(
         If the application has not started, it is acceptable to assume the
         result of this call will be an empty mapping.
         """
-        raise NotImplementedError
 
     @property
+    @abc.abstractmethod
     def shard_count(self) -> int:
         """Number of shards in the total application.
 
         This may not be the same as the size of `shards`. If the application
         is auto-sharded, this may be `0` until the shards are started.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     def get_me(self) -> typing.Optional[users_.OwnUser]:
         """Return the bot user, if known.
 
@@ -262,8 +253,8 @@ class ShardAware(
         typing.Optional[hikari.users.OwnUser]
             The bot user, if known, otherwise `None`.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     async def update_presence(
         self,
         *,
@@ -306,8 +297,8 @@ class ShardAware(
         status : hikari.undefined.UndefinedOr[hikari.presences.Status]
             The web status to show. If undefined, this will not be changed.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     async def update_voice_state(
         self,
         guild: snowflakes.SnowflakeishOr[guilds.PartialGuild],
@@ -340,6 +331,7 @@ class ShardAware(
             client.
         """
 
+    @abc.abstractmethod
     async def request_guild_members(
         self,
         guild: snowflakes.SnowflakeishOr[guilds.PartialGuild],
@@ -388,20 +380,18 @@ class ShardAware(
         """
 
 
-@typing.runtime_checkable
-class InteractionServerAware(RESTAware, EntityFactoryAware, fast_protocol.FastProtocolChecking, typing.Protocol):
+class InteractionServerAware(RESTAware, EntityFactoryAware, abc.ABC):
     """Structural supertype for a interaction REST server-aware object."""
 
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def interaction_server(self) -> interaction_server_.InteractionServer:
         """Interaction server this app is bound to."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class CacheAware(fast_protocol.FastProtocolChecking, typing.Protocol):
+class CacheAware(abc.ABC):
     """Structural supertype for a cache-aware object.
 
     Any cache-aware objects are able to access the Discord application cache.
@@ -410,18 +400,18 @@ class CacheAware(fast_protocol.FastProtocolChecking, typing.Protocol):
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def cache(self) -> cache_.Cache:
         """Immutable cache implementation for this object."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
-class Runnable(fast_protocol.FastProtocolChecking, typing.Protocol):
+class Runnable(abc.ABC):
     """Structural super-type for an application which can be run independently."""
 
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def is_alive(self) -> bool:
         """Whether the application is running or not.
 
@@ -429,11 +419,12 @@ class Runnable(fast_protocol.FastProtocolChecking, typing.Protocol):
         `hikari.errors.ComponentStateConflictError` if this is
         `False`.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     async def close(self) -> None:
         """Kill the application by shutting all components down."""
 
+    @abc.abstractmethod
     async def join(self) -> None:
         """Wait indefinitely until the application closes.
 
@@ -441,18 +432,16 @@ class Runnable(fast_protocol.FastProtocolChecking, typing.Protocol):
         application runtime itself. Any exceptions raised by shards will be
         propagated to here.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     def run(self) -> None:
         """Start the application and block until it's finished running."""
-        raise NotImplementedError
 
+    @abc.abstractmethod
     async def start(self) -> None:
         """Start the application and then return."""
-        raise NotImplementedError
 
 
-@typing.runtime_checkable
 class GatewayBotAware(
     RESTAware,
     Runnable,
@@ -460,34 +449,33 @@ class GatewayBotAware(
     EventFactoryAware,
     EventManagerAware,
     CacheAware,
-    fast_protocol.FastProtocolChecking,
-    typing.Protocol,
+    abc.ABC,
 ):
     """Structural supertype for a component that has all the gateway components."""
 
     __slots__: typing.Sequence[str] = ()
 
 
-@typing.runtime_checkable
-class RESTBotAware(InteractionServerAware, Runnable, fast_protocol.FastProtocolChecking, typing.Protocol):
+class RESTBotAware(InteractionServerAware, Runnable, abc.ABC):
     """Structural supertype for a component that has all the RESTful components."""
 
     __slots__: typing.Sequence[str] = ()
 
     @property
+    @abc.abstractmethod
     def on_shutdown(
         self,
     ) -> typing.Sequence[typing.Callable[[Self], typing.Coroutine[typing.Any, typing.Any, None]]]:
         """Sequence of the bot's asynchronous shutdown callbacks."""
-        raise NotImplementedError
 
     @property
+    @abc.abstractmethod
     def on_startup(
         self,
     ) -> typing.Sequence[typing.Callable[[Self], typing.Coroutine[typing.Any, typing.Any, None]]]:
         """Sequence of the bot's asynchronous startup callbacks."""
-        raise NotImplementedError
 
+    @abc.abstractmethod
     def add_shutdown_callback(
         self, callback: typing.Callable[[RESTBotAware], typing.Coroutine[typing.Any, typing.Any, None]], /
     ) -> None:
@@ -498,8 +486,8 @@ class RESTBotAware(InteractionServerAware, Runnable, fast_protocol.FastProtocolC
         callback : typing.Callable[[RESTBotAware], typing.Coroutine[typing.Any, typing.Any, None]]
             The asynchronous shutdown callback to add.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     def remove_shutdown_callback(
         self, callback: typing.Callable[[RESTBotAware], typing.Coroutine[typing.Any, typing.Any, None]], /
     ) -> None:
@@ -515,8 +503,8 @@ class RESTBotAware(InteractionServerAware, Runnable, fast_protocol.FastProtocolC
         ValueError
             If the callback was not registered.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     def add_startup_callback(
         self, callback: typing.Callable[[RESTBotAware], typing.Coroutine[typing.Any, typing.Any, None]], /
     ) -> None:
@@ -527,8 +515,8 @@ class RESTBotAware(InteractionServerAware, Runnable, fast_protocol.FastProtocolC
         callback : typing.Callable[[RESTBotAware], typing.Coroutine[typing.Any, typing.Any, None]]
             The asynchronous startup callback to add.
         """
-        raise NotImplementedError
 
+    @abc.abstractmethod
     def remove_startup_callback(
         self, callback: typing.Callable[[RESTBotAware], typing.Coroutine[typing.Any, typing.Any, None]], /
     ) -> None:
@@ -544,4 +532,3 @@ class RESTBotAware(InteractionServerAware, Runnable, fast_protocol.FastProtocolC
         ValueError
             If the callback was not registered.
         """
-        raise NotImplementedError
